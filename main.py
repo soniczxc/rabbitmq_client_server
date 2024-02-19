@@ -1,5 +1,6 @@
 import pika
 import sys
+import os
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 import protocol_pb2
 import uuid
@@ -45,7 +46,7 @@ class Client(QWidget):
             response = protocol_pb2.Response()
             response.ParseFromString(body)
             self.response = response
-            self.response_label.setText(f"Response: {self.response.res}")
+            self.response_label.setText(f"Result: {self.response.res}")
 
     def call(self):
         try:
