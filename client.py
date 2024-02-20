@@ -23,7 +23,7 @@ LOG_FILE = config.get('Logging', 'file')
 logger.setLevel(getattr(logging, LOG_LEVEL.upper()))
 
 
-class Client(QWidget):
+class ClientApp(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -37,7 +37,7 @@ class Client(QWidget):
         self.channel.basic_consume(queue=self.callback_queue, on_message_callback=self.on_response, auto_ack=True)
 
         self.response = None
-        self.corr_id = None
+        self.id = None
 
     def initUI(self):
         layout = QVBoxLayout()
@@ -60,7 +60,7 @@ class Client(QWidget):
         self.show()
 
     def on_response(self, ch, method, props, body):
-        if self.corr_id == props.correlation_id:
+        if self.id == props.correlation_id:
             response = protocol_pb2.Response()
             response.ParseFromString(body)
             self.response = response
@@ -73,7 +73,7 @@ class Client(QWidget):
             request.id = str(uuid.uuid4())
             request.req = int(self.input.text())
             self.response = None
-            self.corr_id = request.id
+            self.id = request.id
 
             self.channel.basic_publish(exchange='',
                                        routing_key=QUEUE_REQUEST_NAME,
@@ -88,6 +88,6 @@ class Client(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    client_window = Client()
+    client_window = ClientApp()
 
     sys.exit(app.exec_())
