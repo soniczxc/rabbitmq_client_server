@@ -3,6 +3,8 @@ import sys
 import configparser
 import logging
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton
+
+import client
 from proto import protocol_pb2
 import uuid
 
@@ -37,7 +39,7 @@ class ClientApp(QWidget):
         self.channel.basic_consume(queue=self.callback_queue, on_message_callback=self.on_response, auto_ack=True)
 
         self.response = None
-        self.id = None
+        self.id = str(uuid.uuid4())
 
     def initUI(self):
         layout = QVBoxLayout()
@@ -70,10 +72,9 @@ class ClientApp(QWidget):
     def call(self):
         try:
             request = protocol_pb2.Request()
-            request.id = str(uuid.uuid4())
+            request.id = self.id
             request.req = int(self.input.text())
             self.response = None
-            self.id = request.id
 
             self.channel.basic_publish(exchange='',
                                        routing_key=QUEUE_REQUEST_NAME,
