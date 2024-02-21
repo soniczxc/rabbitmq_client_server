@@ -1,6 +1,7 @@
 import pika
 from proto import protocol_pb2
 import configparser
+import sys
 import logging
 
 config = configparser.ConfigParser()
@@ -12,13 +13,10 @@ QUEUE_REQUEST_NAME = config.get('RabbitMQ', 'queue_request')
 
 LOG_LEVEL = config.get('Logging', 'level')
 LOG_FILE = config.get('Logging', 'file')
-#logging.basicConfig(level=logging.INFO)
-logging.basicConfig(filename='server.log', encoding='utf-8', level=LOG_LEVEL)
+logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=LOG_LEVEL.upper(), filemode='w')
+
 logger = logging.getLogger(__name__)
 
-
-
-logger.setLevel(getattr(logging, LOG_LEVEL.upper()))
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, port=RABBITMQ_PORT))
 channel = connection.channel()
@@ -44,4 +42,7 @@ channel.basic_qos(prefetch_count=1)
 channel.basic_consume(queue=QUEUE_REQUEST_NAME, on_message_callback=on_request)
 if __name__ == '__main__':
     print(" [x] Awaiting requests")
-    channel.start_consuming()
+    try:
+        channel.start_consuming()
+    except KeyboardInterrupt:
+        sys.exit(1)

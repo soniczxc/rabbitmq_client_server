@@ -3,12 +3,13 @@ import sys
 import configparser
 import logging
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton
-
-import client
 from proto import protocol_pb2
 import uuid
+from PyQt5.QtCore import QSettings
 
-logging.basicConfig(level=logging.INFO)
+settings = QSettings()
+settings.setValue("interval", 30)
+
 logger = logging.getLogger(__name__)
 
 config = configparser.ConfigParser()
@@ -22,7 +23,7 @@ TIME_LIMIT = int(config.get('RabbitMQ', 'time_limit'))
 LOG_LEVEL = config.get('Logging', 'level')
 LOG_FILE = config.get('Logging', 'file')
 
-logger.setLevel(getattr(logging, LOG_LEVEL.upper()))
+logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=LOG_LEVEL.upper(), filemode='w')
 
 
 class ClientApp(QWidget):
@@ -90,5 +91,4 @@ class ClientApp(QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     client_window = ClientApp()
-
     sys.exit(app.exec_())
