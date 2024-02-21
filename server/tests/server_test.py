@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from server import on_request
+from server.reabbitmq_server.server import on_request
 
 class TestServer(unittest.TestCase):
 

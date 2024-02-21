@@ -14,9 +14,7 @@ QUEUE_REQUEST_NAME = config.get('RabbitMQ', 'queue_request')
 LOG_LEVEL = config.get('Logging', 'level')
 LOG_FILE = config.get('Logging', 'file')
 logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=LOG_LEVEL.upper(), filemode='w')
-
 logger = logging.getLogger(__name__)
-
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, port=RABBITMQ_PORT))
 channel = connection.channel()

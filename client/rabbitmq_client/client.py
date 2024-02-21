@@ -7,8 +7,6 @@ from proto import protocol_pb2
 import uuid
 from PyQt5.QtCore import QSettings
 
-settings = QSettings()
-settings.setValue("interval", 30)
 
 logger = logging.getLogger(__name__)
 
