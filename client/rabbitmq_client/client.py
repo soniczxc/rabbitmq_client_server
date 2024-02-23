@@ -1,12 +1,10 @@
-import pika
 import sys
 import configparser
 import logging
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QTabWidget, QDialog
+import pika
 from proto import protocol_pb2
 import uuid
-from PyQt5.QtCore import QSettings
-
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +22,59 @@ LOG_FILE = config.get('Logging', 'file')
 logging.basicConfig(filename=LOG_FILE, encoding='utf-8', level=LOG_LEVEL.upper(), filemode='w')
 
 
-class ClientApp(QWidget):
+class SettingsDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('Settings')
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout()
+
+        layout.addWidget(QLabel('RabbitMQ Host:'))
+        self.rabbitmq_host_input = QLineEdit(RABBITMQ_HOST)
+        layout.addWidget(self.rabbitmq_host_input)
+
+        layout.addWidget(QLabel('RabbitMQ Port:'))
+        self.rabbitmq_port_input = QLineEdit(str(RABBITMQ_PORT))
+        layout.addWidget(self.rabbitmq_port_input)
+
+        layout.addWidget(QLabel('Queue Request Name:'))
+        self.queue_request_name_input = QLineEdit(QUEUE_REQUEST_NAME)
+        layout.addWidget(self.queue_request_name_input)
+
+        layout.addWidget(QLabel('Time Limit:'))
+        self.time_limit_input = QLineEdit(str(TIME_LIMIT))
+        layout.addWidget(self.time_limit_input)
+
+        layout.addWidget(QLabel('Logger Level:'))
+        self.logger_level_input = QLineEdit(LOG_LEVEL)
+        layout.addWidget(self.logger_level_input)
+
+        layout.addWidget(QLabel('Logger File:'))
+        self.logger_file_input = QLineEdit(LOG_FILE)
+        layout.addWidget(self.logger_file_input)
+
+        self.save_button = QPushButton('Save Settings')
+        self.save_button.clicked.connect(self.save_settings)
+        layout.addWidget(self.save_button)
+
+        self.setLayout(layout)
+
+    def save_settings(self):
+        config['RabbitMQ']['host'] = self.rabbitmq_host_input.text()
+        config['RabbitMQ']['port'] = self.rabbitmq_port_input.text()
+        config['RabbitMQ']['queue_request'] = self.queue_request_name_input.text()
+        config['RabbitMQ']['time_limit'] = self.time_limit_input.text()
+        config['Logging']['level'] = self.logger_level_input.text()
+        config['Logging']['file'] = self.logger_file_input.text()
+
+        with open('client_config.ini', 'w') as configfile:
+            config.write(configfile)
+        self.accept()
+
+
+class RequestTab(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -56,9 +106,11 @@ class ClientApp(QWidget):
         self.response_label = QLabel('Result:')
         layout.addWidget(self.response_label)
 
+        self.settings_button = QPushButton('Settings')
+        self.settings_button.clicked.connect(self.open_settings)
+        layout.addWidget(self.settings_button)
+
         self.setLayout(layout)
-        self.setWindowTitle('Client')
-        self.show()
 
     def on_response(self, ch, method, props, body):
         if self.id == props.correlation_id:
@@ -85,8 +137,30 @@ class ClientApp(QWidget):
         except Exception as e:
             print(f"An error occurred: {e}")
 
+    def open_settings(self):
+        dialog = SettingsDialog()
+        if dialog.exec_():
+            self.response_label.setText(f"Настройки сохранены")
+            pass
+
+
+class ClientApp(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout()
+
+        self.request_tab = RequestTab()
+
+        layout.addWidget(self.request_tab)
+        self.setLayout(layout)
+        self.setWindowTitle('Client')
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     client_window = ClientApp()
+    client_window.show()
     sys.exit(app.exec_())
