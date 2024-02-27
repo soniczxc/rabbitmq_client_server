@@ -82,11 +82,11 @@ class RequestTab(QWidget):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, port=RABBITMQ_PORT))
         self.channel = self.connection.channel()
 
-        result = self.channel.queue_declare(queue='', exclusive=True)
+        result = self.channel.queue_declare(queue=QUEUE_REQUEST_NAME)
         self.callback_queue = result.method.queue
 
         self.channel.basic_consume(queue=self.callback_queue, on_message_callback=self.on_response, auto_ack=True)
-
+        #self.channel.basic_consume(queue=QUEUE_REQUEST_NAME, on_message_callback=self.on_response, auto_ack=True)
         self.response = None
         self.id = str(uuid.uuid4())
 
@@ -114,8 +114,10 @@ class RequestTab(QWidget):
 
     def on_response(self, ch, method, props, body):
         if self.id == props.correlation_id:
+
             response = protocol_pb2.Response()
             response.ParseFromString(body)
+
             self.response = response
             self.response_label.setText(f"Result: {self.response.res}")
             logger.info(f"Received response from server: {response.res}")
@@ -127,7 +129,7 @@ class RequestTab(QWidget):
             request.req = int(self.input.text())
             self.response = None
 
-            self.channel.basic_publish(exchange='',
+            self.channel.basic_publish(exchange='amq.direct',
                                        routing_key=QUEUE_REQUEST_NAME,
                                        properties=pika.BasicProperties(reply_to=self.callback_queue,
                                                                        correlation_id=request.id),
