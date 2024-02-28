@@ -129,7 +129,7 @@ class RequestTab(QWidget):
             request.req = int(self.input.text())
             self.response = None
 
-            self.channel.basic_publish(exchange='amq.direct',
+            self.channel.basic_publish(exchange='',
                                        routing_key=QUEUE_REQUEST_NAME,
                                        properties=pika.BasicProperties(reply_to=self.callback_queue,
                                                                        correlation_id=request.id),
