@@ -5,6 +5,7 @@ import sys
 import logging
 
 config = configparser.ConfigParser()
+config_file_path = '/home/vova/PycharmProjects/rabbitmq_client_server/server/reabbitmq_server/server_config.ini'
 config.read('server_config.ini')
 
 RABBITMQ_HOST = config.get('RabbitMQ', 'host')
@@ -18,9 +19,7 @@ logger = logging.getLogger(__name__)
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, port=RABBITMQ_PORT))
 channel = connection.channel()
-#channel.exchange_declare(exchange='amq.direct', exchange_type='direct', durable=True)
 channel.queue_declare(queue=QUEUE_REQUEST_NAME)
-#channel.queue_bind(exchange='amq.direct', queue=QUEUE_REQUEST_NAME, routing_key=QUEUE_REQUEST_NAME)
 
 def on_request(ch, method, props, body):
     request = protocol_pb2.Request()

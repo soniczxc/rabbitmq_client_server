@@ -9,7 +9,7 @@ import uuid
 logger = logging.getLogger(__name__)
 
 config = configparser.ConfigParser()
-config.read('client_config.ini')
+config.read('/home/vova/PycharmProjects/rabbitmq_client_server/client/rabbitmq_client/client_config.ini')
 
 RABBITMQ_HOST = config.get('RabbitMQ', 'host')
 RABBITMQ_PORT = int(config.get('RabbitMQ', 'port'))
@@ -86,7 +86,6 @@ class RequestTab(QWidget):
         self.callback_queue = result.method.queue
 
         self.channel.basic_consume(queue=self.callback_queue, on_message_callback=self.on_response, auto_ack=True)
-        #self.channel.basic_consume(queue=QUEUE_REQUEST_NAME, on_message_callback=self.on_response, auto_ack=True)
         self.response = None
         self.id = str(uuid.uuid4())
 

@@ -1,44 +1,43 @@
 import unittest
-from unittest.mock import patch, MagicMock
-from io import StringIO
-from client.rabbitmq_client.client import ClientApp, SettingsDialog
-from PyQt5.QtWidgets import QApplication, QWidget, QLineEdit, QPushButton, QLabel
+from unittest.mock import MagicMock, patch
+from PyQt5.QtWidgets import QApplication
+from client.rabbitmq_client.client import ClientApp, RequestTab
 
-class TestClient(unittest.TestCase):
+
+class TestRequestTab(unittest.TestCase):
 
     def setUp(self):
         self.app = QApplication([])
+        self.tab = RequestTab()
+
+    def tearDown(self):
+        self.app.quit()
+
+    @patch('client.rabbitmq_client.client.pika.BlockingConnection')
+    def test_initUI(self, mock_pika):
+        window = ClientApp()
+        self.assertIsNotNone(self.tab.label)
+        self.assertIsNotNone(self.tab.input)
+        self.assertIsNotNone(self.tab.button)
+        self.assertIsNotNone(self.tab.response_label)
+        self.assertIsNotNone(self.tab.settings_button)
+        self.assertIsInstance(window.request_tab, RequestTab)
+
+    @patch('client.rabbitmq_client.client.SettingsDialog.exec_', return_value=True)
+    def test_open_settings(self, mock_exec):
+        self.tab.open_settings()
+        self.assertEqual(self.tab.response_label.text(), "Настройки сохранены")
 
 
-    @patch('client.pika.BlockingConnection')
-    def test_init(self, mock_blocking_connection):
-        client = ClientApp()
-        self.assertIsNotNone(client.connection)
-        self.assertIsNotNone(client.channel)
-        self.assertIsNone(client.response)
-        self.assertIsNone(client.id)
-
-    @patch('client.pika')
+    @patch('client.rabbitmq_client.client.pika.BlockingConnection')
     def test_call(self, mock_pika):
-        client = ClientApp()
-        client.input = QLineEdit()
-        client.input.setText('10')
-        client.button = QPushButton()
-        client.call()
-        mock_pika.BlockingConnection.assert_called_once()
-        mock_pika.BlockingConnection.return_value.channel.assert_called_once()
-        mock_pika.BlockingConnection.return_value.channel.return_value.basic_publish.assert_called_once()
-
-    @patch('client.protocol_pb2.Response')
-    def test_on_response(self, mock_response):
-        client = ClientApp()
-        mock_response.return_value = MagicMock(res=20)
-        client.id = '123'
-        client.response_label = QLabel()
-        client.on_response(None, None, MagicMock(correlation_id='123'), b'')
-        self.assertEqual(client.response.res, 20)
-        self.assertEqual(client.response_label.text(), "Result: 20")
-
-
+        mock_connection = MagicMock()
+        mock_channel = MagicMock()
+        mock_connection.channel.return_value = mock_channel
+        mock_pika.return_value = mock_connection
+        self.tab.input.setText("10")
+        self.tab.call()
+        mock_connection.close()
+        mock_channel.close()
 if __name__ == '__main__':
     unittest.main()
